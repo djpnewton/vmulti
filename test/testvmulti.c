@@ -24,7 +24,16 @@ Environment:
 #include <hidsdi.h>
 #include <TCHAR.h>
 #include "vmulticommon.h"
-#include <dontuse.h>
+
+#if !__GNUC__
+    #include <dontuse.h>
+#else
+    #define __in
+    #define __in_ecount(x)
+    typedef void* PVOID;
+    typedef PVOID HDEVINFO;
+    WINHIDSDI BOOL WINAPI HidD_SetOutputReport(HANDLE, PVOID, ULONG);
+#endif
 
 //
 // Function prototypes
@@ -260,7 +269,7 @@ CheckIfOurDevice(
     {
         printf("Error: HidD_GetAttributes failed \n");
         goto cleanup;
-    } 
+    }
 
     if (Attributes.VendorID == VMULTI_VID && Attributes.ProductID == VMULTI_PID)
     {
@@ -304,7 +313,7 @@ SendHidRequests(
 
     //
     // Allocate 65 bytes of memory (the report descriptor says so).
-    // We only really need 1 byte for report ID + sizeof(VMultiReportHeader) + 
+    // We only really need 1 byte for report ID + sizeof(VMultiReportHeader) +
     // sizeof(VMultiMouseReport/VMultiMultiTouchReport) but thats ok
     //
 
@@ -362,7 +371,7 @@ SendHidRequests(
     else
     {
         //
-        // Set the mouse report 
+        // Set the mouse report
         //
 
         printf("Sending mouse report\n");
