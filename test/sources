@@ -1,0 +1,19 @@
+TARGETNAME=testvmulti
+TARGETTYPE=PROGRAM
+USE_MSVCRT=1
+
+TARGETLIBS=$(SDK_LIB_PATH)\hid.lib \
+           $(SDK_LIB_PATH)\setupapi.lib \
+           $(SDK_LIB_PATH)\comdlg32.lib 
+           
+SOURCES=testvmulti.c testvmulti.rc
+
+INCLUDES=..\inc
+
+UMTYPE=console
+UMBASE=0x400000
+
+_NT_TARGET_VERSION= $(_NT_TARGET_VERSION_WINXP)
+
+
+
