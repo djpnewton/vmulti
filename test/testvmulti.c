@@ -42,20 +42,18 @@ Environment:
 VOID
 SendHidRequests(
     HANDLE file,
-    int requestType
+    BYTE requestType
     );
 
-BOOL
+HANDLE
 SearchMatchingHwID (
-    __in HDEVINFO            DeviceInfoSet,
-    __in PSP_DEVINFO_DATA    DeviceInfoData
+    void
     );
 
-BOOL
+HANDLE
 OpenDeviceInterface (
     __in       HDEVINFO                    HardwareDeviceInfo,
-    __in       PSP_DEVICE_INTERFACE_DATA   DeviceInterfaceData,
-    __in       int                         requestType
+    __in       PSP_DEVICE_INTERFACE_DATA   DeviceInterfaceData
     );
 
 BOOLEAN
@@ -89,19 +87,81 @@ typedef struct _HID_DEVICE_ATTRIBUTES {
 // Implementation
 //
 
+void
+Usage(void)
+{
+    printf("Usage: testvmulti </multitouch | /mouse | /digitizer>\n");
+}
+
 INT __cdecl
 main(
     __in ULONG argc,
     __in_ecount(argc) PCHAR argv[]
     )
 {
-    HDEVINFO                                                hardwareDeviceInfo;
-    SP_DEVICE_INTERFACE_DATA                    deviceInterfaceData;
-    SP_DEVINFO_DATA                                 devInfoData;
-    GUID            hidguid;
-    int              i;
+    BYTE   reportId;
+    HANDLE file;
 
     UNREFERENCED_PARAMETER(argv);
+
+    //
+    // Parse command line
+    //
+
+    if (argc == 1)
+    {
+        Usage();
+        return 1;
+    }    
+    if (strcmp(argv[1], "/multitouch") == 0)
+    {
+        reportId = REPORTID_MTOUCH;
+    }
+    else if (strcmp(argv[1], "/mouse") == 0)
+    {
+        reportId = REPORTID_MOUSE;
+    }
+    else if (strcmp(argv[1], "/digitizer") == 0)
+    {
+        reportId = REPORTID_DIGI;
+    }
+    else
+    {
+        Usage();
+        return 1;
+    }
+
+    //
+    // File device
+    //
+
+    file = SearchMatchingHwID();
+
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        printf("...sending write request to our device\n");
+        SendHidRequests(file, reportId);
+    }
+    else
+    {
+        return 2;
+    }
+
+    return 0;
+}
+
+
+HANDLE
+SearchMatchingHwID (
+    void
+    )
+{
+    HDEVINFO                  hardwareDeviceInfo;
+    SP_DEVICE_INTERFACE_DATA  deviceInterfaceData;
+    SP_DEVINFO_DATA           devInfoData;
+    GUID                      hidguid;
+    int                       i;
+    HANDLE                    file;
 
     HidD_GetHidGuid(&hidguid);
 
@@ -114,7 +174,7 @@ main(
 
     if (INVALID_HANDLE_VALUE == hardwareDeviceInfo){
         printf("SetupDiGetClassDevs failed: %x\n", GetLastError());
-        return 1;
+        return INVALID_HANDLE_VALUE;
     }
 
     deviceInterfaceData.cbSize = sizeof (SP_DEVICE_INTERFACE_DATA);
@@ -141,14 +201,12 @@ main(
         // If this is our device then send the hid request.
         //
 
-        if (OpenDeviceInterface(hardwareDeviceInfo, &deviceInterfaceData,
-                    argc > 1 ? REPORTID_MOUSE : REPORTID_MTOUCH)){
-            //
-            // device was found and the hid request sent in the above routine
-            // so now cleanup
-            //
+        HANDLE file = OpenDeviceInterface(hardwareDeviceInfo, &deviceInterfaceData);
+
+        if (file != INVALID_HANDLE_VALUE)
+        {
             SetupDiDestroyDeviceInfoList (hardwareDeviceInfo);
-            return 0;
+            return file;
         }
 
         //
@@ -157,27 +215,24 @@ main(
 
     }
 
-    SetupDiDestroyDeviceInfoList (hardwareDeviceInfo);
-
     printf("Failure: Could not find our HID device \n");
 
-    return 0;
+    SetupDiDestroyDeviceInfoList (hardwareDeviceInfo);
+
+    return INVALID_HANDLE_VALUE;
 }
 
-
-BOOL
+HANDLE
 OpenDeviceInterface (
     __in       HDEVINFO                    hardwareDeviceInfo,
-    __in       PSP_DEVICE_INTERFACE_DATA   deviceInterfaceData,
-    __in       int                         requestType
+    __in       PSP_DEVICE_INTERFACE_DATA   deviceInterfaceData
     )
 {
     PSP_DEVICE_INTERFACE_DETAIL_DATA    deviceInterfaceDetailData = NULL;
 
     DWORD        predictedLength = 0;
     DWORD        requiredLength = 0;
-    HANDLE        file;
-    BOOL           deviceFound = FALSE;
+    HANDLE       file = INVALID_HANDLE_VALUE;
 
     SetupDiGetDeviceInterfaceDetail(
                             hardwareDeviceInfo,
@@ -196,7 +251,7 @@ OpenDeviceInterface (
     if (!deviceInterfaceDetailData)
     {
         printf("Error: OpenDeviceInterface: malloc failed\n");
-        return FALSE;
+        goto cleanup;
     }
 
     deviceInterfaceDetailData->cbSize =
@@ -212,7 +267,7 @@ OpenDeviceInterface (
     {
         printf("Error: SetupDiGetInterfaceDeviceDetail failed\n");
         free (deviceInterfaceDetailData);
-        return FALSE;
+        goto cleanup;
     }
 
     file = CreateFile ( deviceInterfaceDetailData->DevicePath,
@@ -226,24 +281,24 @@ OpenDeviceInterface (
     if (INVALID_HANDLE_VALUE == file) {
         printf("Error: CreateFile failed: %d\n", GetLastError());
         free (deviceInterfaceDetailData);
-        return FALSE;
+        goto cleanup;
     }
 
     if (CheckIfOurDevice(file)){
 
-        deviceFound  = TRUE;
-
-        printf("...sending write request to our device\n");
-
-        SendHidRequests(file, requestType);
+        goto cleanup;
 
     }
 
-   CloseHandle(file);
+    CloseHandle(file);
+
+    file = INVALID_HANDLE_VALUE;
+
+cleanup:
 
     free (deviceInterfaceDetailData);
 
-    return deviceFound;
+    return file;
 
 }
 
@@ -300,12 +355,13 @@ cleanup:
 VOID
 SendHidRequests(
     HANDLE file,
-    int requestType
+    BYTE requestType
     )
 {
     VMultiReportHeader* pReport = NULL;
     VMultiMultiTouchReport* pMultiReport = NULL;
-    VMultiMouseReport*  pMouseReport = NULL;
+    VMultiMouseReport* pMouseReport = NULL;
+    VMultiDigiReport* pDigiReport = NULL;
     PCHAR buffer;
     ULONG bufferSize;
     BYTE inputReportSize;
@@ -319,13 +375,17 @@ SendHidRequests(
 
     bufferSize = 65;
 
-    if (requestType == REPORTID_MTOUCH)
+    switch (requestType)
     {
-        inputReportSize = sizeof(VMultiMultiTouchReport);
-    }
-    else
-    {
-        inputReportSize = sizeof(VMultiMouseReport);
+        case REPORTID_MTOUCH:
+            inputReportSize = sizeof(VMultiMultiTouchReport);
+            break;
+        case REPORTID_MOUSE:
+            inputReportSize = sizeof(VMultiMouseReport);
+            break;
+        case REPORTID_DIGI:
+            inputReportSize = sizeof(VMultiDigiReport);
+            break;
     }
 
     if (bufferSize <= sizeof(VMultiReportHeader) + inputReportSize + 1)
@@ -350,38 +410,56 @@ SendHidRequests(
     pReport->ReportID = REPORTID_VENDOR_01;
     pReport->ReportLength = inputReportSize;
 
-    if (requestType == REPORTID_MTOUCH)
+    switch (requestType)
     {
-        //
-        // Set the multitouch report
-        //
+        case REPORTID_MTOUCH:
+            //
+            // Set the multitouch report
+            //
 
-        printf("Sending multitouch report\n");
+            printf("Sending multitouch report\n");
 
-        pMultiReport = (VMultiMultiTouchReport*)(buffer + sizeof(VMultiReportHeader));
-        pMultiReport->ReportID = REPORTID_MTOUCH;
-        pMultiReport->Touch[0].Status = MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT;
-        pMultiReport->Touch[0].XValue = 10000;
-        pMultiReport->Touch[0].YValue = 1000;
-        pMultiReport->Touch[0].Width = 0;
-        pMultiReport->Touch[0].Height = 0;
-        pMultiReport->Touch[0].ContactID = 0;
-        pMultiReport->ActualCount = 1;
-    }
-    else
-    {
-        //
-        // Set the mouse report
-        //
+            pMultiReport = (VMultiMultiTouchReport*)(buffer + sizeof(VMultiReportHeader));
+            pMultiReport->ReportID = REPORTID_MTOUCH;
+            pMultiReport->Touch[0].Status = MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT;
+            pMultiReport->Touch[0].XValue = 10000;
+            pMultiReport->Touch[0].YValue = 1000;
+            pMultiReport->Touch[0].Width = 0;
+            pMultiReport->Touch[0].Height = 0;
+            pMultiReport->Touch[0].ContactID = 0;
+            pMultiReport->ActualCount = 1;
 
-        printf("Sending mouse report\n");
+            break;
+        case REPORTID_MOUSE:
+            //
+            // Set the mouse report
+            //
 
-        pMouseReport = (VMultiMouseReport*)(buffer + sizeof(VMultiReportHeader));
-        pMouseReport->ReportID = REPORTID_MOUSE;
-        pMouseReport->Button = 0;
-        pMouseReport->XValue = 1000;
-        pMouseReport->YValue = 10000;
-        pMouseReport->WheelPosition = 0;
+            printf("Sending mouse report\n");
+
+            pMouseReport = (VMultiMouseReport*)(buffer + sizeof(VMultiReportHeader));
+            pMouseReport->ReportID = REPORTID_MOUSE;
+            pMouseReport->Button = 0;
+            pMouseReport->XValue = 1000;
+            pMouseReport->YValue = 10000;
+            pMouseReport->WheelPosition = 0;
+
+            break;
+
+        case REPORTID_DIGI:
+            //
+            // Set the digitizer report
+            //
+
+            printf("Sending digitizer report\n");
+
+            pDigiReport = (VMultiDigiReport*)(buffer + sizeof(VMultiReportHeader));
+            pDigiReport->ReportID = REPORTID_DIGI;
+            pDigiReport->Status = DIGI_CONFIDENCE_BIT | DIGI_IN_RANGE_BIT;
+            pDigiReport->XValue = 1000;
+            pDigiReport->YValue = 10000;
+
+            break;
     }
 
     //
@@ -392,6 +470,7 @@ SendHidRequests(
     if (!HidD_SetOutputReport(file, buffer, bufferSize))
     {
         printf("failed HidD_SetOutputReport %d\n", GetLastError());
+        printf("%d\n", file);
     }
     else
     {

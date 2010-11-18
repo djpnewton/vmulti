@@ -17,7 +17,8 @@
 #define REPORTID_MTOUCH         0x01
 #define REPORTID_FEATURE        0x02
 #define REPORTID_MOUSE          0x03
-#define REPORTID_VENDOR_01      0x04
+#define REPORTID_DIGI           0x04
+#define REPORTID_VENDOR_01      0x40
 
 //
 // Report header
@@ -32,6 +33,32 @@ typedef struct _VMULTI_REPORT_HEADER
     BYTE        ReportLength;
 
 } VMultiReportHeader;
+#pragma pack()
+
+//
+// Digitizer specific report infomation
+//
+
+#define DIGI_TIPSWITCH_BIT    1
+#define DIGI_IN_RANGE_BIT     2
+#define DIGI_CONFIDENCE_BIT   4
+
+#define DIGI_MIN_COORDINATE   0x0000
+#define DIGI_MAX_COORDINATE   0x7FFF
+
+#pragma pack(1)
+typedef struct _VMULTI_DIGI_REPORT
+{
+
+    BYTE      ReportID;
+
+    BYTE      Status;
+
+    USHORT    XValue;
+
+    USHORT    YValue;
+
+} VMultiDigiReport;
 #pragma pack()
 
 //
