@@ -1,7 +1,6 @@
 TARGETNAME=vmulti
 TARGETTYPE=DRIVER
 
-
 KMDF_VERSION_MAJOR=1
 
 TARGETLIBS=$(DDK_LIB_PATH)\hidclass.lib \
@@ -17,7 +16,7 @@ INF_NAME=vmulti
 NTTARGETFILE0=$(OBJ_PATH)\$(O)\$(INF_NAME).inf
 PASS0_BINPLACE=$(NTTARGETFILE0)
 
-TARGET_DESTINATION=wdf
+TARGET_DESTINATION=bin
 
 # Temporarily excuse usage of serviceability impairing macros in code...
 ALLOW_DATE_TIME=1
