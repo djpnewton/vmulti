@@ -3,23 +3,8 @@ Signature="$CHICAGO$"
 Class=HIDClass
 ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
 Provider=%VENDOR%
-LayoutFile=layout.inf
 DriverVer=01/10/2007,1.0.0.0
 CatalogFile=kmdfsamples.cat
-
-;
-;   Layout.inf (etc.) list all files shipped with the operating system so the 
-;   source description sections are only needed if other files are needed.
-;   
-;   In order to use IHV drivers, the SourceDisksNames section must list the 
-;   disk(s) containing the drivers and the SourceDisksFiles section must list 
-;   which disk number each file to be copied is found on.
-;   Disk number 99 is used to avoid a conflict with the disk numbers defined 
-;   in layout.inf
-;
-;   Files used in a driver installation need to be digitally signed otherwise 
-;   installation may fail.  See documentation elsewhere in the DDK regarding 
-;   driver signing.
 
 [SourceDisksFiles]
 vmulti.sys = 99
@@ -29,40 +14,30 @@ hidkmdf.sys = 99
 99 = %DISK_NAME%,,,""
 
 [DestinationDirs]
-CopySystemSysFiles = 12      
 CopyFunctionDriver = 12      
-CopyFilterDriver = 12      
-CopyFilesDLL = 11 
 
 [Manufacturer]
 %VENDOR%=Vendor, NT$ARCH$, NT$ARCH$.6.1
 
-; For Win2K
-[Vendor]
-%vmulti%    = vmulti.Inst, HID\vmulti
-%customCollection%    = customCollection.Inst, HID_DEVICE_UP:FF00_U:0001
-
 ; For XP and later
 [Vendor.NT$ARCH$]
 %vmulti%    = vmulti.Inst, HID\vmulti
-%customCollection%    = customCollection.Inst, HID_DEVICE_UP:FF00_U:0001
 
 ; For Win7 and later so that we can use inbox HID-KMDF mapper
 [Vendor.NT$ARCH$.6.1]
 %vmulti%    = vmulti.Inst.Win7, HID\vmulti
-%customCollection%    = customCollection.Inst, HID_DEVICE_UP:FF00_U:0001
 
 ;===============================================================
-;   vmulti for Win2K thru Vista
+;   vmulti for XP thru Vista
 ;===============================================================
 [vmulti.Inst.NT]
-CopyFiles = CopySystemSysFiles, CopyFunctionDriver, CopyFilterDriver, CopyFilesDLL
+CopyFiles = CopyFunctionDriver
 
 [vmulti.Inst.NT.HW]
 AddReg = vmulti_Parameters.AddReg 
 
 ;
-; hidkmdf is the function driver and vmulti is the lower filter
+; vmulti is the function driver and hidkmdf is the WDM HID minidriver
 ;
 [vmulti.Inst.NT.Services]
 AddService = hidkmdf,,hidkmdf_Service_Inst,
@@ -96,7 +71,7 @@ CopyFiles = CopyFunctionDriver
 AddReg = vmulti_Win7_Parameters.AddReg 
 
 ;
-; hidkmdf is the function driver and vmulti is the lower filter
+; vmulti is the function driver and mshidkmdf is the WDM HID minidriver
 ;
 [vmulti.Inst.Win7.NT.Services]
 AddService = vmulti,0x00000002, vmulti_Service_Inst
@@ -108,15 +83,8 @@ HKR,,"UpperFilters",0x00010000,"mshidkmdf"
 ;   Sections common to all OS versions
 ;===============================================================
 
-[CopySystemSysFiles]
-HidClass.sys,,,0x00000010    ;COPYFLG_NO_OVERWRITE (for win2k)
-HidParse.sys,,,0x00000010    ;COPYFLG_NO_OVERWRITE (for win2k)
-
 [CopyFunctionDriver]
 vmulti.sys
-
-[CopyFilesDLL]
-Hid.dll,,,0x00000010    ;COPYFLG_NO_OVERWRITE (for win2k)
 
 [vmulti_Service_Inst]
 DisplayName    = %vmulti%
@@ -124,22 +92,6 @@ ServiceType    = %SERVICE_KERNEL_DRIVER%
 StartType      = %SERVICE_DEMAND_START% 
 ErrorControl   = %SERVICE_ERROR_IGNORE% 
 ServiceBinary  = %12%\vmulti.sys 
-
-;===============================================================
-;   Custom Collection install section
-; - Only a Null service is installed.
-;===============================================================
-[customCollection.Inst.NT]
-; NULL section
-
-[customCollection.Inst.NT.HW]
-AddReg = customCollection.Inst.AddReg.NT.HW
-
-[customCollection.Inst.AddReg.NT.HW]
-HKR,,"SelectiveSuspendEnabled",0x00000001,0x1
-
-[customCollection.Inst.NT.Services]
-AddService = ,0x00000002,   ; NULL Service
 
 ;================================================================
 ;--- WDF Coinstaller installation ------
@@ -168,9 +120,8 @@ KmdfLibraryVersion = $KMDFVERSION$
 [Strings] 
 ;  *******Localizable Strings******* 
 VENDOR         = "djpnewton@gmail.com" 
-vmulti       = "KMDF HID Minidriver for Virtual Multitouch Device" 
-customCollection = "HID Vendor-defined Collection for Virtual Multitouch"
-DISK_NAME      = "Virtual Multitouch Device Install Disk"
+vmulti         = "VMulti HID" 
+DISK_NAME      = "VMulti Device Install Disk"
 hidkmdf.SVCDESC= "Filter Driver Service for HID-KMDF Interface layer"
 
 ;  *******Non Localizable Strings******* 
