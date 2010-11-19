@@ -351,6 +351,38 @@ cleanup:
     return result;
 }
 
+BOOL
+HidOutput(
+    BOOL useSetOutputReport,
+    HANDLE file,
+    PCHAR buffer,
+    ULONG bufferSize
+    )
+{
+    ULONG bytesWritten;
+    if (useSetOutputReport)
+    {
+        //
+        // Send Hid report thru HidD_SetOutputReport API
+        //
+
+        if (!HidD_SetOutputReport(file, buffer, bufferSize))
+        {
+            printf("failed HidD_SetOutputReport %d\n", GetLastError());
+            return FALSE;
+        }
+    }
+    else
+    {
+        if (!WriteFile(file, buffer, bufferSize, &bytesWritten, NULL))
+        {
+            printf("failed WriteFile %d\n", GetLastError());
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
 
 VOID
 SendHidRequests(
@@ -365,7 +397,6 @@ SendHidRequests(
     PCHAR buffer;
     ULONG bufferSize;
     BYTE inputReportSize;
-    ULONG bytesWritten;
 
     //
     // Allocate 65 bytes of memory (the report descriptor says so).
@@ -414,11 +445,9 @@ SendHidRequests(
     {
         case REPORTID_MTOUCH:
             //
-            // Set the multitouch report
+            // Send the multitouch reports
             //
-
             printf("Sending multitouch report\n");
-
             pMultiReport = (VMultiMultiTouchReport*)(buffer + sizeof(VMultiReportHeader));
             pMultiReport->ReportID = REPORTID_MTOUCH;
             pMultiReport->Touch[0].Status = MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT;
@@ -428,68 +457,71 @@ SendHidRequests(
             pMultiReport->Touch[0].Height = 0;
             pMultiReport->Touch[0].ContactID = 0;
             pMultiReport->ActualCount = 1;
-
+            HidOutput(FALSE, file, buffer, bufferSize);
+            pMultiReport->Touch[0].Status |= MULTI_TIPSWITCH_BIT;
+            HidOutput(FALSE, file, buffer, bufferSize);
             break;
+
         case REPORTID_MOUSE:
             //
-            // Set the mouse report
+            // Send the mouse report
             //
-
             printf("Sending mouse report\n");
-
             pMouseReport = (VMultiMouseReport*)(buffer + sizeof(VMultiReportHeader));
             pMouseReport->ReportID = REPORTID_MOUSE;
             pMouseReport->Button = 0;
             pMouseReport->XValue = 1000;
             pMouseReport->YValue = 10000;
             pMouseReport->WheelPosition = 0;
-
+            HidOutput(FALSE, file, buffer, bufferSize);
             break;
 
         case REPORTID_DIGI:
             //
-            // Set the digitizer report
+            // Send the digitizer reports
             //
-
             printf("Sending digitizer report\n");
-
             pDigiReport = (VMultiDigiReport*)(buffer + sizeof(VMultiReportHeader));
             pDigiReport->ReportID = REPORTID_DIGI;
-            pDigiReport->Status = DIGI_CONFIDENCE_BIT | DIGI_IN_RANGE_BIT;
+            pDigiReport->Status = DIGI_IN_RANGE_BIT;
             pDigiReport->XValue = 1000;
             pDigiReport->YValue = 10000;
-
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->YValue = 12000;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->YValue = 14000;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->YValue = 16000;
+            pDigiReport->Status |= DIGI_TIPSWITCH_BIT;
+            Sleep(100);
+            pDigiReport->YValue = 18000;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->YValue = 20000;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->XValue = 2000;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->XValue = 3000;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->Status = DIGI_IN_RANGE_BIT;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->YValue = 15000;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            Sleep(100);
+            pDigiReport->YValue = 10000;
+            HidOutput(FALSE, file, buffer, bufferSize);
+            pDigiReport->Status = 0;
+            HidOutput(FALSE, file, buffer, bufferSize);
             break;
-    }
-
-    //
-    // Send Hid report thru HidD_SetOutputReport API
-    //
-    //
-
-    if (!HidD_SetOutputReport(file, buffer, bufferSize))
-    {
-        printf("failed HidD_SetOutputReport %d\n", GetLastError());
-        printf("%d\n", file);
-    }
-    else
-    {
-        printf("HidD_SetOutputReport succeded\n");
-    }
-
-    if (requestType == REPORTID_MTOUCH)
-    {
-        // non digitizer/pen devices cant hover (damn you wisptis!)
-        pMultiReport->Touch[0].Status |= MULTI_TIPSWITCH_BIT;
-
-        if (!WriteFile(file, buffer, bufferSize, &bytesWritten, NULL))
-        {
-            printf("failed WriteFile %d\n", GetLastError());
-        }
-        else
-        {
-            printf("WriteFile succeded, %d bytes written\n", bytesWritten);
-        }
     }
 
     free(buffer);
