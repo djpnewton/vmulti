@@ -25,9 +25,7 @@ Environment:
 #include <TCHAR.h>
 #include "vmulticommon.h"
 
-#if !__GNUC__
-    #include <dontuse.h>
-#else
+#if __GNUC__
     #define __in
     #define __in_ecount(x)
     typedef void* PVOID;
