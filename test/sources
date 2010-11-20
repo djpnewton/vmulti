@@ -4,7 +4,8 @@ USE_MSVCRT=1
 
 TARGETLIBS=$(SDK_LIB_PATH)\hid.lib \
            $(SDK_LIB_PATH)\setupapi.lib \
-           $(SDK_LIB_PATH)\comdlg32.lib 
+           $(SDK_LIB_PATH)\comdlg32.lib \
+           $(OBJ_PATH)\..\client\$(O)\vmulticlient.lib 
            
 SOURCES=testvmulti.c testvmulti.rc
 

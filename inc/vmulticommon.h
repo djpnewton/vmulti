@@ -21,6 +21,12 @@
 #define REPORTID_VENDOR_01      0x40
 
 //
+// Vendor defined report size
+//
+
+#define VENDOR_REPORT_SIZE      0x41
+
+//
 // Report header
 //
 
