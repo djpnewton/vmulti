@@ -11,7 +11,7 @@
 
 VOID
 SendHidRequests(
-    HANDLE file,
+    pvmulti_client vmulti,
     BYTE requestType
     );
 
@@ -27,8 +27,8 @@ Usage(void)
 
 INT __cdecl
 main(
-    __in ULONG argc,
-    __in_ecount(argc) PCHAR argv[]
+    int argc,
+    PCHAR argv[]
     )
 {
     BYTE   reportId;
@@ -44,7 +44,7 @@ main(
     {
         Usage();
         return 1;
-    }    
+    }
     if (strcmp(argv[1], "/multitouch") == 0)
     {
         reportId = REPORTID_MTOUCH;

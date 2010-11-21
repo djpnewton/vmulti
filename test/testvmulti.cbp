@@ -39,6 +39,9 @@
 			<Add library="setupapi" />
 			<Add library="comdlg32" />
 		</Linker>
+		<Unit filename="..\client\client.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="testvmulti.c">
 			<Option compilerVar="CC" />
 		</Unit>
