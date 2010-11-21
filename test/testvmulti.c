@@ -102,17 +102,10 @@ SendHidRequests(
             // Send the multitouch reports
             //
             printf("Sending multitouch report\n");
-            while (1)
-            {
-            printf("Sending multitouch report\n");
             vmulti_update_multitouch(vmulti, 1, MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT, 1000, 10000, 1, 0, 0, 0, 0);
-            Sleep(100);
             vmulti_update_multitouch(vmulti, 1, MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT | MULTI_TIPSWITCH_BIT, 1000, 10000, 1, 0, 0, 0, 0);
-            Sleep(100);
             vmulti_update_multitouch(vmulti, 1, MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT, 1000, 10000, 1, 0, 0, 0, 0);
-            Sleep(100);
             vmulti_update_multitouch(vmulti, 1, 0, 1000, 10000, 1, 0, 0, 0, 0);
-            }
             break;
 
         case REPORTID_MOUSE:
