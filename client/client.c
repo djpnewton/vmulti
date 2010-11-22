@@ -189,12 +189,12 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, BYTE actualCount, BYTE stat
     pMultiReport->Touch[0].Width = 0;
     pMultiReport->Touch[0].Height = 0;
     pMultiReport->Touch[0].ContactID = contactId1;
-    pMultiReport->Touch[0].Status = status2;
-    pMultiReport->Touch[0].XValue = x2;
-    pMultiReport->Touch[0].YValue = y2;
-    pMultiReport->Touch[0].Width = 0;
-    pMultiReport->Touch[0].Height = 0;
-    pMultiReport->Touch[0].ContactID = contactId2;
+    pMultiReport->Touch[1].Status = status2;
+    pMultiReport->Touch[1].XValue = x2;
+    pMultiReport->Touch[1].YValue = y2;
+    pMultiReport->Touch[1].Width = 0;
+    pMultiReport->Touch[1].Height = 0;
+    pMultiReport->Touch[1].ContactID = contactId2;
     pMultiReport->ActualCount = actualCount;
 
     // Send the report
