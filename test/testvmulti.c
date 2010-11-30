@@ -22,7 +22,7 @@ SendHidRequests(
 void
 Usage(void)
 {
-    printf("Usage: testvmulti </multitouch | /mouse | /digitizer>\n");
+    printf("Usage: testvmulti </multitouch | /mouse | /digitizer | /joystick>\n");
 }
 
 INT __cdecl
@@ -56,6 +56,10 @@ main(
     else if (strcmp(argv[1], "/digitizer") == 0)
     {
         reportId = REPORTID_DIGI;
+    }
+    else if (strcmp(argv[1], "/joystick") == 0)
+    {
+        reportId = REPORTID_JOYSTICK;
     }
     else
     {
@@ -144,6 +148,25 @@ SendHidRequests(
             vmulti_update_digi(vmulti, DIGI_IN_RANGE_BIT, 3000, 10000);
             vmulti_update_digi(vmulti, 0, 3000, 10000);
             break;
+
+        case REPORTID_JOYSTICK:
+        {
+            //
+            // Send the joystick report
+            //
+            BYTE buttons = 0, x = 0, y = 128, throttle = 0;
+            printf("Sending joystick report\n");
+            while (1)
+            {
+                vmulti_update_joystick(vmulti, buttons, x, y, throttle);
+                buttons++;
+                x++;
+                y++;
+                throttle++;
+                Sleep(10);
+            }
+            break;
+        }
     }
 }
 

@@ -18,6 +18,7 @@
 #define REPORTID_FEATURE        0x02
 #define REPORTID_MOUSE          0x03
 #define REPORTID_DIGI           0x04
+#define REPORTID_JOYSTICK       0x05
 #define REPORTID_VENDOR_01      0x40
 
 //
@@ -39,6 +40,27 @@ typedef struct _VMULTI_REPORT_HEADER
     BYTE        ReportLength;
 
 } VMultiReportHeader;
+#pragma pack()
+
+//
+// Joystick specific report infomation
+//
+
+#pragma pack(1)
+typedef struct _VMULTI_JOYSTICK_REPORT
+{
+
+    BYTE      ReportID;
+
+    BYTE      Throttle;
+
+    BYTE      XValue;
+
+    BYTE      YValue;
+
+    BYTE      ButtonsAndHat;
+
+} VMultiJoystickReport;
 #pragma pack()
 
 //

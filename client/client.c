@@ -201,6 +201,40 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, BYTE actualCount, BYTE stat
     return HidOutput(TRUE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
 }
 
+
+BOOL vmulti_update_joystick(pvmulti_client vmulti, BYTE buttonsAndHat, BYTE x, BYTE y, BYTE throttle)
+{
+    VMultiReportHeader* pReport = NULL;
+    VMultiJoystickReport* pJoystickReport = NULL;
+
+    if (VENDOR_REPORT_SIZE <= sizeof(VMultiReportHeader) + sizeof(VMultiJoystickReport))
+    {
+        return FALSE;
+    }
+
+    //
+    // Set the report header
+    //
+
+    pReport = (VMultiReportHeader*)vmulti->vendorReport;
+    pReport->ReportID = REPORTID_VENDOR_01;
+    pReport->ReportLength = sizeof(VMultiJoystickReport);
+
+    //
+    // Set the input report
+    //
+
+    pJoystickReport = (VMultiJoystickReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
+    pJoystickReport->ReportID = REPORTID_JOYSTICK;
+    pJoystickReport->ButtonsAndHat = buttonsAndHat;
+    pJoystickReport->XValue = x;
+    pJoystickReport->YValue = y;
+    pJoystickReport->Throttle = throttle;
+
+    // Send the report
+    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
+}
+
 HANDLE
 SearchMatchingHwID (
     void
