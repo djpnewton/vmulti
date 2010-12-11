@@ -1,0 +1,18 @@
+TARGETNAME=vmulticlient
+TARGETTYPE=LIBRARY
+USE_MSVCRT=1
+
+TARGETLIBS=$(SDK_LIB_PATH)\hid.lib \
+           $(SDK_LIB_PATH)\setupapi.lib \
+           $(SDK_LIB_PATH)\comdlg32.lib 
+           
+SOURCES=client.c
+
+INCLUDES=..\inc
+
+TARGET_DESTINATION=bin
+
+_NT_TARGET_VERSION= $(_NT_TARGET_VERSION_WINXP)
+
+
+
