@@ -154,14 +154,18 @@ SendHidRequests(
             //
             // Send the joystick report
             //
-            BYTE buttons = 0, x = 0, y = 128, throttle = 0;
+            USHORT buttons = 0;
+            BYTE hat = 0, x = 0, y = 128, rx = 128, ry = 64, throttle = 0;
             printf("Sending joystick report\n");
             while (1)
             {
-                vmulti_update_joystick(vmulti, buttons, x, y, throttle);
-                buttons++;
+                vmulti_update_joystick(vmulti, buttons, hat, x, y, rx, ry, throttle);
+                buttons = rand() | ((rand()&1) << 15); //rand() | rand() << 15 | rand() % 4 << 30;
+                hat++;
                 x++;
                 y++;
+                rx++;
+                ry--;
                 throttle++;
                 Sleep(10);
             }

@@ -202,7 +202,7 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, BYTE actualCount, BYTE stat
 }
 
 
-BOOL vmulti_update_joystick(pvmulti_client vmulti, BYTE buttonsAndHat, BYTE x, BYTE y, BYTE throttle)
+BOOL vmulti_update_joystick(pvmulti_client vmulti, USHORT buttons, BYTE hat, BYTE x, BYTE y, BYTE rx, BYTE ry, BYTE throttle)
 {
     VMultiReportHeader* pReport = NULL;
     VMultiJoystickReport* pJoystickReport = NULL;
@@ -226,9 +226,12 @@ BOOL vmulti_update_joystick(pvmulti_client vmulti, BYTE buttonsAndHat, BYTE x, B
 
     pJoystickReport = (VMultiJoystickReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
     pJoystickReport->ReportID = REPORTID_JOYSTICK;
-    pJoystickReport->ButtonsAndHat = buttonsAndHat;
+    pJoystickReport->Buttons = buttons;
+	pJoystickReport->Hat = hat;
     pJoystickReport->XValue = x;
     pJoystickReport->YValue = y;
+	pJoystickReport->RXValue = rx;
+	pJoystickReport->RYValue = ry;
     pJoystickReport->Throttle = throttle;
 
     // Send the report

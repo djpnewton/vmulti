@@ -57,8 +57,14 @@ typedef struct _VMULTI_JOYSTICK_REPORT
     BYTE      XValue;
 
     BYTE      YValue;
-
-    BYTE      ButtonsAndHat;
+	
+    BYTE      Hat;
+	
+    BYTE      RXValue;
+	
+    BYTE      RYValue;
+	
+    USHORT    Buttons;
 
 } VMultiJoystickReport;
 #pragma pack()
