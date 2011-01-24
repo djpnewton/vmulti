@@ -227,11 +227,11 @@ BOOL vmulti_update_joystick(pvmulti_client vmulti, USHORT buttons, BYTE hat, BYT
     pJoystickReport = (VMultiJoystickReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
     pJoystickReport->ReportID = REPORTID_JOYSTICK;
     pJoystickReport->Buttons = buttons;
-	pJoystickReport->Hat = hat;
+    pJoystickReport->Hat = hat;
     pJoystickReport->XValue = x;
     pJoystickReport->YValue = y;
-	pJoystickReport->RXValue = rx;
-	pJoystickReport->RYValue = ry;
+    pJoystickReport->RXValue = rx;
+    pJoystickReport->RYValue = ry;
     pJoystickReport->Throttle = throttle;
 
     // Send the report
