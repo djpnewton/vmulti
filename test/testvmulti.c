@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "vmulticommon.h"
 #include "vmulticlient.h"
 
 //
@@ -102,15 +101,49 @@ SendHidRequests(
     switch (requestType)
     {
         case REPORTID_MTOUCH:
+        {
             //
             // Send the multitouch reports
             //
+            
+            BYTE i;
+            BYTE actualCount = 4; // set whatever number you want, lower than MULTI_MAX_COUNT
+            PTOUCH pTouch = (PTOUCH)malloc(actualCount * sizeof(TOUCH));
+
             printf("Sending multitouch report\n");
-            vmulti_update_multitouch(vmulti, 1, MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT, 1000, 10000, 0, 0, 0, 0, 0);
-            vmulti_update_multitouch(vmulti, 1, MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT | MULTI_TIPSWITCH_BIT, 1000, 10000, 0, 0, 0, 0, 0);
-            vmulti_update_multitouch(vmulti, 1, MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT, 1000, 10000, 0, 0, 0, 0, 0);
-            vmulti_update_multitouch(vmulti, 1, 0, 1000, 10000, 0, 0, 0, 0, 0);
+
+            for (i = 0; i < actualCount; i++)
+            {
+                pTouch[i].ContactID = i;
+                pTouch[i].Status = MULTI_CONFIDENCE_BIT | MULTI_IN_RANGE_BIT | MULTI_TIPSWITCH_BIT;
+                pTouch[i].XValue = (i + 1) * 1000;
+                pTouch[i].YValue = (i + 1) * 1500 + 5000;
+                pTouch[i].Width = 20;
+                pTouch[i].Height = 30;
+            }
+
+            if (!vmulti_update_multitouch(vmulti, pTouch, actualCount))
+              printf("vmulti_update_multitouch TOUCH_DOWN FAILED\n");
+              
+            for (i = 0; i < actualCount; i++)
+            {
+                pTouch[i].XValue += 1000;
+                pTouch[i].YValue += 1000;
+            }              
+
+            if (!vmulti_update_multitouch(vmulti, pTouch, actualCount))
+                printf("vmulti_update_multitouch TOUCH_MOVE FAILED\n");
+
+            for (i = 0; i < actualCount; i++)
+              pTouch[i].Status = 0;
+
+            if (!vmulti_update_multitouch(vmulti, pTouch, actualCount))
+                printf("vmulti_update_multitouch TOUCH_UP FAILED\n");
+                        
+            free(pTouch);
+            
             break;
+        }
 
         case REPORTID_MOUSE:
             //

@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "vmulticommon.h"
 #include "vmulticlient.h"
 
 #if __GNUC__
@@ -159,15 +158,14 @@ BOOL vmulti_update_digi(pvmulti_client vmulti, BYTE status, USHORT x, USHORT y)
     return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
 }
 
-BOOL vmulti_update_multitouch(pvmulti_client vmulti, BYTE actualCount, BYTE status1, USHORT x1, USHORT y1, BYTE contactId1, BYTE status2, USHORT x2, USHORT y2, BYTE contactId2)
+BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualCount)
 {
     VMultiReportHeader* pReport = NULL;
     VMultiMultiTouchReport* pMultiReport = NULL;
+    int numberOfTouchesSent = 0;
 
     if (VENDOR_REPORT_SIZE <= sizeof(VMultiReportHeader) + sizeof(VMultiMultiTouchReport))
-    {
         return FALSE;
-    }
 
     //
     // Set the report header
@@ -177,28 +175,33 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, BYTE actualCount, BYTE stat
     pReport->ReportID = REPORTID_VENDOR_01;
     pReport->ReportLength = sizeof(VMultiMultiTouchReport);
 
-    //
-    // Set the input report
-    //
+    while (numberOfTouchesSent < actualCount)
+    {
 
-    pMultiReport = (VMultiMultiTouchReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
-    pMultiReport->ReportID = REPORTID_MTOUCH;
-    pMultiReport->Touch[0].Status = status1;
-    pMultiReport->Touch[0].XValue = x1;
-    pMultiReport->Touch[0].YValue = y1;
-    pMultiReport->Touch[0].Width = 0;
-    pMultiReport->Touch[0].Height = 0;
-    pMultiReport->Touch[0].ContactID = contactId1;
-    pMultiReport->Touch[1].Status = status2;
-    pMultiReport->Touch[1].XValue = x2;
-    pMultiReport->Touch[1].YValue = y2;
-    pMultiReport->Touch[1].Width = 0;
-    pMultiReport->Touch[1].Height = 0;
-    pMultiReport->Touch[1].ContactID = contactId2;
-    pMultiReport->ActualCount = actualCount;
+        //
+        // Set the input report
+        //
 
-    // Send the report
-    return HidOutput(TRUE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
+        pMultiReport = (VMultiMultiTouchReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
+        pMultiReport->ReportID = REPORTID_MTOUCH;
+        memcpy(pMultiReport->Touch, pTouch + numberOfTouchesSent, sizeof(TOUCH));
+        if (numberOfTouchesSent <= actualCount - 2)
+            memcpy(pMultiReport->Touch + 1, pTouch + numberOfTouchesSent + 1, sizeof(TOUCH));
+		else
+            memset(pMultiReport->Touch + 1, 0, sizeof(TOUCH));
+        if (numberOfTouchesSent == 0)
+            pMultiReport->ActualCount = actualCount;
+        else
+            pMultiReport->ActualCount = 0;
+
+        // Send the report
+        if (!HidOutput(TRUE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE))
+            return FALSE;
+
+        numberOfTouchesSent += 2;
+    }
+
+    return TRUE;
 }
 
 
