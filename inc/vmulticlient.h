@@ -1,6 +1,8 @@
 #if !defined(_VMULTI_CLIENT_H_)
 #define _VMULTI_CLIENT_H_
 
+#include "vmulticommon.h"
+
 typedef struct _vmulti_client_t* pvmulti_client;
 
 pvmulti_client vmulti_alloc(void);
@@ -15,7 +17,7 @@ BOOL vmulti_update_mouse(pvmulti_client vmulti, BYTE button, USHORT x, USHORT y,
 
 BOOL vmulti_update_digi(pvmulti_client vmulti, BYTE status, USHORT x, USHORT y);
 
-BOOL vmulti_update_multitouch(pvmulti_client vmulti, BYTE actualCount, BYTE status1, USHORT x1, USHORT y1, BYTE contactId1, BYTE status2, USHORT x2, USHORT y2, BYTE contactId2);
+BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualCount);
 
 BOOL vmulti_update_joystick(pvmulti_client vmulti, USHORT buttons, BYTE hat, BYTE x, BYTE y, BYTE rx, BYTE ry, BYTE throttle);
 
