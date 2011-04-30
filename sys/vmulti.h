@@ -31,6 +31,42 @@
 #define NTDEVICE_NAME_STRING       L"\\Device\\VMulti"
 #define SYMBOLIC_NAME_STRING       L"\\DosDevices\\VMulti"
 
+#define MT_TOUCH_COLLECTION                                                    \
+    0xa1, 0x02,                         /*     COLLECTION (Logical)         */ \
+    0x09, 0x42,                         /*       USAGE (Tip Switch)         */ \
+    0x15, 0x00,                         /*       LOGICAL_MINIMUM (0)        */ \
+    0x25, 0x01,                         /*       LOGICAL_MAXIMUM (1)        */ \
+    0x75, 0x01,                         /*       REPORT_SIZE (1)            */ \
+    0x95, 0x01,                         /*       REPORT_COUNT (1)           */ \
+    0x81, 0x02,                         /*       INPUT (Data,Var,Abs)       */ \
+    0x09, 0x32,                         /*       USAGE (In Range)           */ \
+    0x81, 0x02,                         /*       INPUT (Data,Var,Abs)       */ \
+    0x09, 0x47,                         /*       USAGE (Confidence)         */ \
+    0x81, 0x02,                         /*       INPUT (Data,Var,Abs)       */ \
+    0x95, 0x05,                         /*       REPORT_COUNT (5)           */ \
+    0x81, 0x03,                         /*       INPUT (Cnst,Ary,Abs)       */ \
+    0x75, 0x08,                         /*       REPORT_SIZE (8)            */ \
+    0x09, 0x51,                         /*       USAGE (Contact Identifier) */ \
+    0x95, 0x01,                         /*       REPORT_COUNT (1)           */ \
+    0x81, 0x02,                         /*       INPUT (Data,Var,Abs)       */ \
+    0x05, 0x01,                         /*       USAGE_PAGE (Generic Desk.. */ \
+    0x26, 0xff, 0x7f,                   /*       LOGICAL_MAXIMUM (32767)    */ \
+    0x75, 0x10,                         /*       REPORT_SIZE (16)           */ \
+    0x55, 0x00,                         /*       UNIT_EXPONENT (0)          */ \
+    0x65, 0x00,                         /*       UNIT (None)                */ \
+    0x35, 0x00,                         /*       PHYSICAL_MINIMUM (0)       */ \
+    0x46, 0x00, 0x00,                   /*       PHYSICAL_MAXIMUM (0)       */ \
+    0x09, 0x30,                         /*       USAGE (X)                  */ \
+    0x81, 0x02,                         /*       INPUT (Data,Var,Abs)       */ \
+    0x09, 0x31,                         /*       USAGE (Y)                  */ \
+    0x81, 0x02,                         /*       INPUT (Data,Var,Abs)       */ \
+    0x05, 0x0d,                         /*       USAGE PAGE (Digitizers)    */ \
+    0x09, 0x48,                         /*       USAGE (Width)              */ \
+    0x81, 0x02,                         /*       INPUT (Data,Var,Abs)       */ \
+    0x09, 0x49,                         /*       USAGE (Height)             */ \
+    0x81, 0x02,                         /*       INPUT (Data,Var,Abs)       */ \
+    0xc0,                               /*    END_COLLECTION                */
+
 //
 // This is the default report descriptor for the Hid device provided
 // by the mini driver in response to IOCTL_HID_GET_REPORT_DESCRIPTOR.
@@ -47,75 +83,8 @@ HID_REPORT_DESCRIPTOR DefaultReportDescriptor[] = {
     0xa1, 0x01,                         // COLLECTION (Application)
     0x85, REPORTID_MTOUCH,              //   REPORT_ID (Touch)
     0x09, 0x22,                         //   USAGE (Finger)
-    0xa1, 0x02,                         //     COLLECTION (Logical)
-    0x09, 0x42,                         //       USAGE (Tip Switch)
-    0x15, 0x00,                         //       LOGICAL_MINIMUM (0)
-    0x25, 0x01,                         //       LOGICAL_MAXIMUM (1)
-    0x75, 0x01,                         //       REPORT_SIZE (1)
-    0x95, 0x01,                         //       REPORT_COUNT (1)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x09, 0x32,                         //       USAGE (In Range)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x09, 0x47,                         //       USAGE (Confidence)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x95, 0x05,                         //       REPORT_COUNT (5)
-    0x81, 0x03,                         //       INPUT (Cnst,Ary,Abs)
-    0x75, 0x08,                         //       REPORT_SIZE (8)
-    0x09, 0x51,                         //       USAGE (Contact Identifier)
-    0x95, 0x01,                         //       REPORT_COUNT (1)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x05, 0x01,                         //       USAGE_PAGE (Generic Desk..
-    0x26, 0xff, 0x7f,                   //       LOGICAL_MAXIMUM (32767)
-    0x75, 0x10,                         //       REPORT_SIZE (16)
-    0x55, 0x00,                         //       UNIT_EXPONENT (0)
-    0x65, 0x00,                         //       UNIT (None)
-    0x35, 0x00,                         //       PHYSICAL_MINIMUM (0)
-    0x46, 0x00, 0x00,                   //       PHYSICAL_MAXIMUM (0)
-    0x09, 0x30,                         //       USAGE (X)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x09, 0x31,                         //       USAGE (Y)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x05, 0x0d,                         //       USAGE PAGE (Digitizers)
-    0x09, 0x48,                         //       USAGE (Width)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x09, 0x49,                         //       USAGE (Height)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)    
-    0xc0,                               //    END_COLLECTION
-    0xa1, 0x02,                         //    COLLECTION (Logical)
-    0x05, 0x0d,                         //     USAGE_PAGE (Digitizers)
-    0x09, 0x42,                         //       USAGE (Tip Switch)
-    0x15, 0x00,                         //       LOGICAL_MINIMUM (0)
-    0x25, 0x01,                         //       LOGICAL_MAXIMUM (1)
-    0x75, 0x01,                         //       REPORT_SIZE (1)
-    0x95, 0x01,                         //       REPORT_COUNT (1)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x09, 0x32,                         //       USAGE (In Range)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x09, 0x47,                         //       USAGE (Confidence)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x95, 0x05,                         //       REPORT_COUNT (5)
-    0x81, 0x03,                         //       INPUT (Cnst,Ary,Abs)
-    0x75, 0x08,                         //       REPORT_SIZE (8)
-    0x09, 0x51,                         //       USAGE ( Cotact Identifier)
-    0x95, 0x01,                         //       REPORT_COUNT (1)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x05, 0x01,                         //       USAGE_PAGE (Generic Desk..
-    0x26, 0xff, 0x7f,                   //       LOGICAL_MAXIMUM (32767)
-    0x75, 0x10,                         //       REPORT_SIZE (16)
-    0x55, 0x00,                         //       UNIT_EXPONENT (0)
-    0x65, 0x00,                         //       UNIT (None)
-    0x35, 0x00,                         //       PHYSICAL_MINIMUM (0)
-    0x46, 0x00, 0x00,                   //       PHYSICAL_MAXIMUM (0)
-    0x09, 0x30,                         //       USAGE (X)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x09, 0x31,                         //       USAGE (Y)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x05, 0x0d,                         //       USAGE PAGE (Digitizers)
-    0x09, 0x48,                         //       USAGE (Width)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)
-    0x09, 0x49,                         //       USAGE (Height)
-    0x81, 0x02,                         //       INPUT (Data,Var,Abs)    
-    0xc0,                               //    END_COLLECTION
+    MT_TOUCH_COLLECTION
+    MT_TOUCH_COLLECTION
     0x05, 0x0d,                         //    USAGE_PAGE (Digitizers)
     0x09, 0x54,                         //    USAGE (Contact Count)
     0x95, 0x01,                         //    REPORT_COUNT (1)

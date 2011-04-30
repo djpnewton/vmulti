@@ -129,7 +129,7 @@ typedef struct _VMULTI_MOUSE_REPORT
 #define MULTI_MIN_COORDINATE   0x0000
 #define MULTI_MAX_COORDINATE   0x7FFF
 
-#define MULTI_MAX_COUNT        2
+#define MULTI_MAX_COUNT        20
 
 #pragma pack(1)
 typedef struct
@@ -155,7 +155,7 @@ typedef struct _VMULTI_MULTITOUCH_REPORT
 
     BYTE      ReportID;
 
-    TOUCH     Touch[MULTI_MAX_COUNT];
+    TOUCH     Touch[2];
 
     BYTE      ActualCount;
 
