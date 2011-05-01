@@ -21,7 +21,7 @@ SendHidRequests(
 void
 Usage(void)
 {
-    printf("Usage: testvmulti </multitouch | /mouse | /digitizer | /joystick>\n");
+    printf("Usage: testvmulti </multitouch | /mouse | /digitizer | /joystick | /keyboard>\n");
 }
 
 INT __cdecl
@@ -59,6 +59,10 @@ main(
     else if (strcmp(argv[1], "/joystick") == 0)
     {
         reportId = REPORTID_JOYSTICK;
+    }
+    else if (strcmp(argv[1], "/keyboard") == 0)
+    {
+        reportId = REPORTID_KEYBOARD;
     }
     else
     {
@@ -111,6 +115,7 @@ SendHidRequests(
             PTOUCH pTouch = (PTOUCH)malloc(actualCount * sizeof(TOUCH));
 
             printf("Sending multitouch report\n");
+            Sleep(3000);
 
             for (i = 0; i < actualCount; i++)
             {
@@ -203,6 +208,50 @@ SendHidRequests(
                 Sleep(10);
             }
             break;
+        }
+        
+        case REPORTID_KEYBOARD:
+        {
+            //
+            // Send the keyboard report
+            //
+
+            // See http://www.usb.org/developers/devclass_docs/Hut1_11.pdf
+            // for a list of key codes            
+                        
+            BYTE shiftKeys = KBD_LGUI_BIT;
+            BYTE keyCodes[KBD_KEY_CODES] = {0, 0, 0, 0, 0, 0};
+            printf("Sending keyboard report\n");            
+            
+            // Windows key
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            shiftKeys = 0;
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);            
+            Sleep(100);
+            
+            // 'Hello'
+            shiftKeys = KBD_LSHIFT_BIT;
+            keyCodes[0] = 0x0b; // 'h'
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            shiftKeys = 0;
+            keyCodes[0] = 0x08; // 'e'
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            keyCodes[0] = 0x0f; // 'l'
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            keyCodes[0] = 0x0;
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            keyCodes[0] = 0x0f; // 'l'
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            keyCodes[0] = 0x12; // 'o'
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            keyCodes[0] = 0x0;
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            
+            // Toggle caps lock
+            keyCodes[0] = 0x39; // caps lock
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+            keyCodes[0] = 0x0;
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);            
         }
     }
 }
