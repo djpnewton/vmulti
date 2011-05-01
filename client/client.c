@@ -241,6 +241,37 @@ BOOL vmulti_update_joystick(pvmulti_client vmulti, USHORT buttons, BYTE hat, BYT
     return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
 }
 
+BOOL vmulti_update_keyboard(pvmulti_client vmulti, BYTE shiftKeyFlags, BYTE keyCodes[KBD_KEY_CODES])
+{
+    VMultiReportHeader* pReport = NULL;
+    VMultiKeyboardReport* pKeyboardReport = NULL;
+
+    if (VENDOR_REPORT_SIZE <= sizeof(VMultiReportHeader) + sizeof(VMultiKeyboardReport))
+    {
+        return FALSE;
+    }
+
+    //
+    // Set the report header
+    //
+
+    pReport = (VMultiReportHeader*)vmulti->vendorReport;
+    pReport->ReportID = REPORTID_VENDOR_01;
+    pReport->ReportLength = sizeof(VMultiKeyboardReport);
+
+    //
+    // Set the input report
+    //
+
+    pKeyboardReport = (VMultiKeyboardReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
+    pKeyboardReport->ReportID = REPORTID_KEYBOARD;
+    pKeyboardReport->ShiftKeyFlags = shiftKeyFlags;
+    memcpy(pKeyboardReport->KeyCodes, keyCodes, KBD_KEY_CODES);
+
+    // Send the report
+    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
+}
+
 HANDLE
 SearchMatchingHwID (
     void

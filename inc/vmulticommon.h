@@ -19,6 +19,7 @@
 #define REPORTID_MOUSE          0x03
 #define REPORTID_DIGI           0x04
 #define REPORTID_JOYSTICK       0x05
+#define REPORTID_KEYBOARD       0x06
 #define REPORTID_VENDOR_01      0x40
 
 //
@@ -40,6 +41,47 @@ typedef struct _VMULTI_REPORT_HEADER
     BYTE        ReportLength;
 
 } VMultiReportHeader;
+#pragma pack()
+
+//
+// Keyboard specific report infomation
+//
+
+#define KBD_LCONTROL_BIT     1
+#define KBD_LSHIFT_BIT       2
+#define KBD_LALT_BIT         4
+#define KBD_LGUI_BIT         8
+#define KBD_RCONTROL_BIT     16
+#define KBD_RSHIFT_BIT       32
+#define KBD_RALT_BIT         64
+#define KBD_RGUI_BIT         128
+
+#define KBD_KEY_CODES        6
+
+#pragma pack(1)
+typedef struct _VMULTI_KEYBOARD_REPORT
+{
+
+    BYTE      ReportID;
+
+    // Left Control, Left Shift, Left Alt, Left GUI
+    // Right Control, Right Shift, Right Alt, Right GUI
+    BYTE      ShiftKeyFlags;
+
+    BYTE      Reserved;
+
+    // See http://www.usb.org/developers/devclass_docs/Hut1_11.pdf
+    // for a list of key codes
+    BYTE      KeyCodes[KBD_KEY_CODES];
+
+} VMultiKeyboardReport;
+
+typedef struct _VMULTI_KEYBOARD_OUTPUT_REPORT
+{
+    // Num Lock, Caps Lock, Scroll Lock, Compose, Kana
+    BYTE      LedFlags;
+} VMultiKeyboardOutputReport;
+
 #pragma pack()
 
 //
