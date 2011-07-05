@@ -699,7 +699,7 @@ VMultiWriteReport(
     NTSTATUS status = STATUS_SUCCESS;
     WDF_REQUEST_PARAMETERS params;
     PHID_XFER_PACKET transferPacket = NULL;
-    VMultiReportHeader* pReport = NULL;
+    VMultiControlReportHeader* pReport = NULL;
     size_t bytesWritten = 0;
 
     VMultiPrint(DEBUG_LEVEL_VERBOSE, DBG_IOCTL,
@@ -735,15 +735,15 @@ VMultiWriteReport(
 
             switch (transferPacket->reportId)
             {
-                case REPORTID_VENDOR_01:
+                case REPORTID_CONTROL:
 
-                    pReport = (VMultiReportHeader*) transferPacket->reportBuffer;
+                    pReport = (VMultiControlReportHeader*) transferPacket->reportBuffer;
 
-                    if (pReport->ReportLength <= transferPacket->reportBufferLen - sizeof(VMultiReportHeader))
+                    if (pReport->ReportLength <= transferPacket->reportBufferLen - sizeof(VMultiControlReportHeader))
                     {
                         status = VMultiProcessVendorReport(
                                 DevContext,
-                                transferPacket->reportBuffer + sizeof(VMultiReportHeader),
+                                transferPacket->reportBuffer + sizeof(VMultiControlReportHeader),
                                 pReport->ReportLength,
                                 &bytesWritten);
 
@@ -766,7 +766,7 @@ VMultiWriteReport(
                         VMultiPrint(DEBUG_LEVEL_ERROR, DBG_IOCTL,
                                 "VMultiWriteReport Error pReport.ReportLength (%d) is too big for buffer size (%d)\n", 
                                 pReport->ReportLength,
-                                transferPacket->reportBufferLen - sizeof(VMultiReportHeader));
+                                transferPacket->reportBufferLen - sizeof(VMultiControlReportHeader));
                     }
 
                     break;

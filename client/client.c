@@ -17,7 +17,7 @@
 typedef struct _vmulti_client_t
 {
     HANDLE hVMulti;
-    BYTE vendorReport[VENDOR_REPORT_SIZE];
+    BYTE controlReport[CONTROL_REPORT_SIZE];
 } vmulti_client_t;
 
 //
@@ -26,18 +26,23 @@ typedef struct _vmulti_client_t
 
 HANDLE
 SearchMatchingHwID (
-    void
+    USAGE myUsagePage,
+    USAGE myUsage
     );
 
 HANDLE
 OpenDeviceInterface (
-    __in       HDEVINFO                    HardwareDeviceInfo,
-    __in       PSP_DEVICE_INTERFACE_DATA   DeviceInterfaceData
+    HDEVINFO HardwareDeviceInfo,
+    PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
+    USAGE myUsagePage,
+    USAGE myUsage
     );
 
 BOOLEAN
 CheckIfOurDevice(
-    HANDLE file
+    HANDLE file,
+    USAGE myUsagePage,
+    USAGE myUsage
     );
 
 BOOL
@@ -84,7 +89,7 @@ void vmulti_free(pvmulti_client vmulti)
 
 BOOL vmulti_connect(pvmulti_client vmulti)
 {
-    vmulti->hVMulti = SearchMatchingHwID();
+    vmulti->hVMulti = SearchMatchingHwID(0xff00, 0x0001);
     return vmulti->hVMulti != INVALID_HANDLE_VALUE && vmulti->hVMulti != NULL;
 }
 
@@ -95,10 +100,10 @@ void vmulti_disconnect(pvmulti_client vmulti)
 
 BOOL vmulti_update_mouse(pvmulti_client vmulti, BYTE button, USHORT x, USHORT y, BYTE wheelPosition)
 {
-    VMultiReportHeader* pReport = NULL;
+    VMultiControlReportHeader* pReport = NULL;
     VMultiMouseReport* pMouseReport = NULL;
 
-    if (VENDOR_REPORT_SIZE <= sizeof(VMultiReportHeader) + sizeof(VMultiMouseReport))
+    if (CONTROL_REPORT_SIZE <= sizeof(VMultiControlReportHeader) + sizeof(VMultiMouseReport))
     {
         return FALSE;
     }
@@ -107,15 +112,15 @@ BOOL vmulti_update_mouse(pvmulti_client vmulti, BYTE button, USHORT x, USHORT y,
     // Set the report header
     //
 
-    pReport = (VMultiReportHeader*)vmulti->vendorReport;
-    pReport->ReportID = REPORTID_VENDOR_01;
+    pReport = (VMultiControlReportHeader*)vmulti->controlReport;
+    pReport->ReportID = REPORTID_CONTROL;
     pReport->ReportLength = sizeof(VMultiMouseReport);
 
     //
     // Set the input report
     //
 
-    pMouseReport = (VMultiMouseReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
+    pMouseReport = (VMultiMouseReport*)(vmulti->controlReport + sizeof(VMultiControlReportHeader));
     pMouseReport->ReportID = REPORTID_MOUSE;
     pMouseReport->Button = button;
     pMouseReport->XValue = x;
@@ -123,15 +128,15 @@ BOOL vmulti_update_mouse(pvmulti_client vmulti, BYTE button, USHORT x, USHORT y,
     pMouseReport->WheelPosition = wheelPosition;
 
     // Send the report
-    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
+    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
 }
 
 BOOL vmulti_update_digi(pvmulti_client vmulti, BYTE status, USHORT x, USHORT y)
 {
-    VMultiReportHeader* pReport = NULL;
+    VMultiControlReportHeader* pReport = NULL;
     VMultiDigiReport* pDigiReport = NULL;
 
-    if (VENDOR_REPORT_SIZE <= sizeof(VMultiReportHeader) + sizeof(VMultiDigiReport))
+    if (CONTROL_REPORT_SIZE <= sizeof(VMultiControlReportHeader) + sizeof(VMultiDigiReport))
     {
         return FALSE;
     }
@@ -140,39 +145,39 @@ BOOL vmulti_update_digi(pvmulti_client vmulti, BYTE status, USHORT x, USHORT y)
     // Set the report header
     //
 
-    pReport = (VMultiReportHeader*)vmulti->vendorReport;
-    pReport->ReportID = REPORTID_VENDOR_01;
+    pReport = (VMultiControlReportHeader*)vmulti->controlReport;
+    pReport->ReportID = REPORTID_CONTROL;
     pReport->ReportLength = sizeof(VMultiDigiReport);
 
     //
     // Set the input report
     //
 
-    pDigiReport = (VMultiDigiReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
+    pDigiReport = (VMultiDigiReport*)(vmulti->controlReport + sizeof(VMultiControlReportHeader));
     pDigiReport->ReportID = REPORTID_DIGI;
     pDigiReport->Status = status;
     pDigiReport->XValue = x;
     pDigiReport->YValue = y;
 
     // Send the report
-    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
+    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
 }
 
 BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualCount)
 {
-    VMultiReportHeader* pReport = NULL;
+    VMultiControlReportHeader* pReport = NULL;
     VMultiMultiTouchReport* pMultiReport = NULL;
     int numberOfTouchesSent = 0;
 
-    if (VENDOR_REPORT_SIZE <= sizeof(VMultiReportHeader) + sizeof(VMultiMultiTouchReport))
+    if (CONTROL_REPORT_SIZE <= sizeof(VMultiControlReportHeader) + sizeof(VMultiMultiTouchReport))
         return FALSE;
 
     //
     // Set the report header
     //
 
-    pReport = (VMultiReportHeader*)vmulti->vendorReport;
-    pReport->ReportID = REPORTID_VENDOR_01;
+    pReport = (VMultiControlReportHeader*)vmulti->controlReport;
+    pReport->ReportID = REPORTID_CONTROL;
     pReport->ReportLength = sizeof(VMultiMultiTouchReport);
 
     while (numberOfTouchesSent < actualCount)
@@ -182,7 +187,7 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualC
         // Set the input report
         //
 
-        pMultiReport = (VMultiMultiTouchReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
+        pMultiReport = (VMultiMultiTouchReport*)(vmulti->controlReport + sizeof(VMultiControlReportHeader));
         pMultiReport->ReportID = REPORTID_MTOUCH;
         memcpy(pMultiReport->Touch, pTouch + numberOfTouchesSent, sizeof(TOUCH));
         if (numberOfTouchesSent <= actualCount - 2)
@@ -195,7 +200,7 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualC
             pMultiReport->ActualCount = 0;
 
         // Send the report
-        if (!HidOutput(TRUE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE))
+        if (!HidOutput(TRUE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE))
             return FALSE;
 
         numberOfTouchesSent += 2;
@@ -204,13 +209,12 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualC
     return TRUE;
 }
 
-
 BOOL vmulti_update_joystick(pvmulti_client vmulti, USHORT buttons, BYTE hat, BYTE x, BYTE y, BYTE rx, BYTE ry, BYTE throttle)
 {
-    VMultiReportHeader* pReport = NULL;
+    VMultiControlReportHeader* pReport = NULL;
     VMultiJoystickReport* pJoystickReport = NULL;
 
-    if (VENDOR_REPORT_SIZE <= sizeof(VMultiReportHeader) + sizeof(VMultiJoystickReport))
+    if (CONTROL_REPORT_SIZE <= sizeof(VMultiControlReportHeader) + sizeof(VMultiJoystickReport))
     {
         return FALSE;
     }
@@ -219,15 +223,15 @@ BOOL vmulti_update_joystick(pvmulti_client vmulti, USHORT buttons, BYTE hat, BYT
     // Set the report header
     //
 
-    pReport = (VMultiReportHeader*)vmulti->vendorReport;
-    pReport->ReportID = REPORTID_VENDOR_01;
+    pReport = (VMultiControlReportHeader*)vmulti->controlReport;
+    pReport->ReportID = REPORTID_CONTROL;
     pReport->ReportLength = sizeof(VMultiJoystickReport);
 
     //
     // Set the input report
     //
 
-    pJoystickReport = (VMultiJoystickReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
+    pJoystickReport = (VMultiJoystickReport*)(vmulti->controlReport + sizeof(VMultiControlReportHeader));
     pJoystickReport->ReportID = REPORTID_JOYSTICK;
     pJoystickReport->Buttons = buttons;
     pJoystickReport->Hat = hat;
@@ -238,15 +242,15 @@ BOOL vmulti_update_joystick(pvmulti_client vmulti, USHORT buttons, BYTE hat, BYT
     pJoystickReport->Throttle = throttle;
 
     // Send the report
-    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
+    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
 }
 
 BOOL vmulti_update_keyboard(pvmulti_client vmulti, BYTE shiftKeyFlags, BYTE keyCodes[KBD_KEY_CODES])
 {
-    VMultiReportHeader* pReport = NULL;
+    VMultiControlReportHeader* pReport = NULL;
     VMultiKeyboardReport* pKeyboardReport = NULL;
 
-    if (VENDOR_REPORT_SIZE <= sizeof(VMultiReportHeader) + sizeof(VMultiKeyboardReport))
+    if (CONTROL_REPORT_SIZE <= sizeof(VMultiControlReportHeader) + sizeof(VMultiKeyboardReport))
     {
         return FALSE;
     }
@@ -255,26 +259,91 @@ BOOL vmulti_update_keyboard(pvmulti_client vmulti, BYTE shiftKeyFlags, BYTE keyC
     // Set the report header
     //
 
-    pReport = (VMultiReportHeader*)vmulti->vendorReport;
-    pReport->ReportID = REPORTID_VENDOR_01;
+    pReport = (VMultiControlReportHeader*)vmulti->controlReport;
+    pReport->ReportID = REPORTID_CONTROL;
     pReport->ReportLength = sizeof(VMultiKeyboardReport);
 
     //
     // Set the input report
     //
 
-    pKeyboardReport = (VMultiKeyboardReport*)(vmulti->vendorReport + sizeof(VMultiReportHeader));
+    pKeyboardReport = (VMultiKeyboardReport*)(vmulti->controlReport + sizeof(VMultiControlReportHeader));
     pKeyboardReport->ReportID = REPORTID_KEYBOARD;
     pKeyboardReport->ShiftKeyFlags = shiftKeyFlags;
     memcpy(pKeyboardReport->KeyCodes, keyCodes, KBD_KEY_CODES);
 
     // Send the report
-    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->vendorReport, VENDOR_REPORT_SIZE);
+    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
+}
+
+BOOL vmulti_write_message(pvmulti_client vmulti, VMultiMessageReport* pReport)
+{
+    VMultiControlReportHeader* pReportHeader;
+    ULONG bytesWritten;
+
+    //
+    // Set the report header
+    //
+
+    pReportHeader = (VMultiControlReportHeader*)vmulti->controlReport;
+    pReportHeader->ReportID = REPORTID_CONTROL;
+    pReportHeader->ReportLength = sizeof(VMultiMessageReport);
+
+    //
+    // Set the body
+    //
+
+    pReport->ReportID = REPORTID_MESSAGE;
+    memcpy(vmulti->controlReport + sizeof(VMultiControlReportHeader), pReport, sizeof(VMultiMessageReport));
+
+    //
+    // Write the report
+    //
+
+    if (!WriteFile(vmulti->hVMulti, vmulti->controlReport, CONTROL_REPORT_SIZE, &bytesWritten, NULL))
+    {
+        printf("failed WriteFile %d\n", GetLastError());
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+BOOL vmulti_read_message(pvmulti_client vmulti, VMultiMessageReport* pReport)
+{
+    ULONG bytesRead;
+
+    //
+    // Find the message HID
+    //
+
+    HANDLE hMsg = SearchMatchingHwID(0xff00, 0x0002);
+    if (hMsg == INVALID_HANDLE_VALUE || hMsg == NULL)
+    {
+        printf("failed SearchMatchingHwID for message HID\n");
+        return FALSE;
+    }
+
+    //
+    // Read the report
+    //
+
+    //if (!HidD_GetInputReport(vmulti->hVMulti, vmulti->controlReport, CONTROL_REPORT_SIZE))
+    if (!ReadFile(hMsg, pReport, sizeof(VMultiMessageReport), &bytesRead, NULL))
+    {
+        CloseHandle(hMsg);
+        printf("failed ReadFile %d\n", GetLastError());
+        return FALSE;
+    }
+
+    CloseHandle(hMsg);
+    return TRUE;
 }
 
 HANDLE
 SearchMatchingHwID (
-    void
+    USAGE myUsagePage,
+    USAGE myUsage
     )
 {
     HDEVINFO                  hardwareDeviceInfo;
@@ -292,7 +361,8 @@ SearchMatchingHwID (
                                             (DIGCF_PRESENT |
                                             DIGCF_INTERFACEDEVICE));
 
-    if (INVALID_HANDLE_VALUE == hardwareDeviceInfo){
+    if (INVALID_HANDLE_VALUE == hardwareDeviceInfo)
+    {
         printf("SetupDiGetClassDevs failed: %x\n", GetLastError());
         return INVALID_HANDLE_VALUE;
     }
@@ -305,15 +375,16 @@ SearchMatchingHwID (
     // Enumerate devices of this interface class
     //
 
-    printf("\n....looking for our HID device (with UP=0xFF00 "
-                "and Usage=0x01)\n");
+    printf("\n....looking for our HID device (with UP=0x%x "
+                "and Usage=0x%x)\n", myUsagePage, myUsage);
 
-    for(i=0; SetupDiEnumDeviceInterfaces (hardwareDeviceInfo,
+    for (i = 0; SetupDiEnumDeviceInterfaces (hardwareDeviceInfo,
                             0, // No care about specific PDOs
                             (LPGUID)&hidguid,
                             i, //
                             &deviceInterfaceData);
-                            i++ ){
+                            i++)
+    {
 
         //
         // Open the device interface and Check if it is our device
@@ -321,7 +392,7 @@ SearchMatchingHwID (
         // If this is our device then send the hid request.
         //
 
-        HANDLE file = OpenDeviceInterface(hardwareDeviceInfo, &deviceInterfaceData);
+        HANDLE file = OpenDeviceInterface(hardwareDeviceInfo, &deviceInterfaceData, myUsagePage, myUsage);
 
         if (file != INVALID_HANDLE_VALUE)
         {
@@ -344,8 +415,10 @@ SearchMatchingHwID (
 
 HANDLE
 OpenDeviceInterface (
-    __in       HDEVINFO                    hardwareDeviceInfo,
-    __in       PSP_DEVICE_INTERFACE_DATA   deviceInterfaceData
+    HDEVINFO hardwareDeviceInfo,
+    PSP_DEVICE_INTERFACE_DATA deviceInterfaceData,
+    USAGE myUsagePage,
+    USAGE myUsage
     )
 {
     PSP_DEVICE_INTERFACE_DETAIL_DATA    deviceInterfaceDetailData = NULL;
@@ -392,7 +465,7 @@ OpenDeviceInterface (
 
     file = CreateFile ( deviceInterfaceDetailData->DevicePath,
                             GENERIC_READ | GENERIC_WRITE,
-                            0, // FILE_SHARE_READ | FILE_SHARE_READ |
+                            FILE_SHARE_READ | FILE_SHARE_READ,
                             NULL, // no SECURITY_ATTRIBUTES structure
                             OPEN_EXISTING, // No special create flags
                             0, // No special attributes
@@ -403,7 +476,7 @@ OpenDeviceInterface (
         goto cleanup;
     }
 
-    if (CheckIfOurDevice(file)){
+    if (CheckIfOurDevice(file, myUsagePage, myUsage)){
 
         goto cleanup;
 
@@ -424,13 +497,13 @@ cleanup:
 
 BOOLEAN
 CheckIfOurDevice(
-    HANDLE file)
+    HANDLE file,
+    USAGE myUsagePage,
+    USAGE myUsage)
 {
     PHIDP_PREPARSED_DATA Ppd = NULL; // The opaque parser info describing this device
     HIDD_ATTRIBUTES                 Attributes; // The Attributes of this hid device.
     HIDP_CAPS                       Caps; // The Capabilities of this hid device.
-    USAGE                           MyUsagePage = 0xff00;
-    USAGE                           MyUsage = 0x0001;
     BOOLEAN                         result = FALSE;
 
     if (!HidD_GetPreparsedData (file, &Ppd))
@@ -453,7 +526,7 @@ CheckIfOurDevice(
             goto cleanup;
         }
 
-        if ((Caps.UsagePage == MyUsagePage) && (Caps.Usage == MyUsage))
+        if ((Caps.UsagePage == myUsagePage) && (Caps.Usage == myUsage))
         {
             printf("Success: Found my device.. \n");
             result = TRUE;
