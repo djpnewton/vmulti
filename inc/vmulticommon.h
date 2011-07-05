@@ -20,27 +20,28 @@
 #define REPORTID_DIGI           0x04
 #define REPORTID_JOYSTICK       0x05
 #define REPORTID_KEYBOARD       0x06
-#define REPORTID_VENDOR_01      0x40
+#define REPORTID_MESSAGE        0x10
+#define REPORTID_CONTROL        0x40
 
 //
-// Vendor defined report size
+// Control defined report size
 //
 
-#define VENDOR_REPORT_SIZE      0x41
+#define CONTROL_REPORT_SIZE      0x41
 
 //
 // Report header
 //
 
 #pragma pack(1)
-typedef struct _VMULTI_REPORT_HEADER
+typedef struct _VMULTI_CONTROL_REPORT_HEADER
 {
 
     BYTE        ReportID;
 
     BYTE        ReportLength;
 
-} VMultiReportHeader;
+} VMultiControlReportHeader;
 #pragma pack()
 
 //
@@ -99,13 +100,13 @@ typedef struct _VMULTI_JOYSTICK_REPORT
     BYTE      XValue;
 
     BYTE      YValue;
-	
+
     BYTE      Hat;
-	
+
     BYTE      RXValue;
-	
+
     BYTE      RYValue;
-	
+
     USHORT    Buttons;
 
 } VMultiJoystickReport;
@@ -238,6 +239,23 @@ typedef struct _VMULTI_MAXCOUNT_REPORT
     BYTE         MaximumCount;
 
 } VMultiMaxCountReport;
+#pragma pack()
+
+//
+// Message specific report information
+//
+
+#define MESSAGE_SIZE 0x20
+
+#pragma pack(1)
+typedef struct _VMULTI_MESSAGE_REPORT
+{
+
+    BYTE        ReportID;
+
+    char        Message[MESSAGE_SIZE];
+
+} VMultiMessageReport;
 #pragma pack()
 
 #endif
