@@ -21,7 +21,7 @@ SendHidRequests(
 void
 Usage(void)
 {
-    printf("Usage: testvmulti </multitouch | /mouse | /digitizer | /joystick | /keyboard | /vendormsg>\n");
+    printf("Usage: testvmulti </multitouch | /mouse | /digitizer | /joystick | /keyboard | /write_message | /read_message>\n");
 }
 
 INT __cdecl
@@ -64,9 +64,20 @@ main(
     {
         reportId = REPORTID_KEYBOARD;
     }
-    else if (strcmp(argv[1], "/vendormsg") == 0)
+    else if (strcmp(argv[1], "/write_message") == 0)
     {
         reportId = REPORTID_MESSAGE;
+    }
+    else if (strcmp(argv[1], "/read_message") == 0)
+    {
+        VMultiMessageReport report;
+        printf("Reading vendor message report\n");
+
+        if (vmulti_read_message(NULL, &report))
+        {
+            printf(report.Message);
+        }
+        return;
     }
     else
     {
@@ -95,6 +106,7 @@ main(
     SendHidRequests(vmulti, reportId);
 
     vmulti_disconnect(vmulti);
+
     vmulti_free(vmulti);
 
     return 0;
@@ -263,16 +275,13 @@ SendHidRequests(
         case REPORTID_MESSAGE:
         {
             VMultiMessageReport report;
-            printf("Reading vendor report\n");
+            printf("Writing vendor message report\n");
 
             memcpy(report.Message, "Hello VMulti\x00", 13);
 
-            if (vmulti_write_message(vmulti, &report) &&
-                vmulti_read_message(vmulti, &report))
-            {
-                printf(report.Message);
-                printf("\n*\n");
-            }
+            vmulti_write_message(vmulti, &report);
+
+            break;
         }
     }
 }
