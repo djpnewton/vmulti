@@ -16,7 +16,8 @@
 
 typedef struct _vmulti_client_t
 {
-    HANDLE hVMulti;
+    HANDLE hControl;
+    HANDLE hMessage;
     BYTE controlReport[CONTROL_REPORT_SIZE];
 } vmulti_client_t;
 
@@ -89,13 +90,42 @@ void vmulti_free(pvmulti_client vmulti)
 
 BOOL vmulti_connect(pvmulti_client vmulti)
 {
-    vmulti->hVMulti = SearchMatchingHwID(0xff00, 0x0001);
-    return vmulti->hVMulti != INVALID_HANDLE_VALUE && vmulti->hVMulti != NULL;
+    //
+    // Find the HID devices
+    //
+
+    vmulti->hControl = SearchMatchingHwID(0xff00, 0x0001);
+    if (vmulti->hControl == INVALID_HANDLE_VALUE || vmulti->hControl == NULL)
+        return FALSE;
+    vmulti->hMessage = SearchMatchingHwID(0xff00, 0x0002);
+    if (vmulti->hMessage == INVALID_HANDLE_VALUE || vmulti->hMessage == NULL)
+    {
+        vmulti_disconnect(vmulti);
+        return FALSE;
+    }
+
+    //
+    // Set the buffer count to 10 on the message HID
+    //
+
+    if (!HidD_SetNumInputBuffers(vmulti->hMessage, 10))
+    {
+        printf("failed HidD_SetNumInputBuffers %d\n", GetLastError());
+        vmulti_disconnect(vmulti);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 void vmulti_disconnect(pvmulti_client vmulti)
 {
-    CloseHandle(vmulti->hVMulti);
+    if (vmulti->hControl != NULL)
+        CloseHandle(vmulti->hControl);
+    if (vmulti->hMessage != NULL)
+        CloseHandle(vmulti->hMessage);
+    vmulti->hControl = NULL;
+    vmulti->hMessage = NULL;
 }
 
 BOOL vmulti_update_mouse(pvmulti_client vmulti, BYTE button, USHORT x, USHORT y, BYTE wheelPosition)
@@ -128,7 +158,7 @@ BOOL vmulti_update_mouse(pvmulti_client vmulti, BYTE button, USHORT x, USHORT y,
     pMouseReport->WheelPosition = wheelPosition;
 
     // Send the report
-    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
+    return HidOutput(FALSE, vmulti->hControl, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
 }
 
 BOOL vmulti_update_digi(pvmulti_client vmulti, BYTE status, USHORT x, USHORT y)
@@ -160,7 +190,7 @@ BOOL vmulti_update_digi(pvmulti_client vmulti, BYTE status, USHORT x, USHORT y)
     pDigiReport->YValue = y;
 
     // Send the report
-    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
+    return HidOutput(FALSE, vmulti->hControl, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
 }
 
 BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualCount)
@@ -192,7 +222,7 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualC
         memcpy(pMultiReport->Touch, pTouch + numberOfTouchesSent, sizeof(TOUCH));
         if (numberOfTouchesSent <= actualCount - 2)
             memcpy(pMultiReport->Touch + 1, pTouch + numberOfTouchesSent + 1, sizeof(TOUCH));
-		else
+        else
             memset(pMultiReport->Touch + 1, 0, sizeof(TOUCH));
         if (numberOfTouchesSent == 0)
             pMultiReport->ActualCount = actualCount;
@@ -200,7 +230,7 @@ BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualC
             pMultiReport->ActualCount = 0;
 
         // Send the report
-        if (!HidOutput(TRUE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE))
+        if (!HidOutput(TRUE, vmulti->hControl, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE))
             return FALSE;
 
         numberOfTouchesSent += 2;
@@ -242,7 +272,7 @@ BOOL vmulti_update_joystick(pvmulti_client vmulti, USHORT buttons, BYTE hat, BYT
     pJoystickReport->Throttle = throttle;
 
     // Send the report
-    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
+    return HidOutput(FALSE, vmulti->hControl, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
 }
 
 BOOL vmulti_update_keyboard(pvmulti_client vmulti, BYTE shiftKeyFlags, BYTE keyCodes[KBD_KEY_CODES])
@@ -273,7 +303,7 @@ BOOL vmulti_update_keyboard(pvmulti_client vmulti, BYTE shiftKeyFlags, BYTE keyC
     memcpy(pKeyboardReport->KeyCodes, keyCodes, KBD_KEY_CODES);
 
     // Send the report
-    return HidOutput(FALSE, vmulti->hVMulti, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
+    return HidOutput(FALSE, vmulti->hControl, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
 }
 
 BOOL vmulti_write_message(pvmulti_client vmulti, VMultiMessageReport* pReport)
@@ -300,7 +330,7 @@ BOOL vmulti_write_message(pvmulti_client vmulti, VMultiMessageReport* pReport)
     // Write the report
     //
 
-    if (!WriteFile(vmulti->hVMulti, vmulti->controlReport, CONTROL_REPORT_SIZE, &bytesWritten, NULL))
+    if (!WriteFile(vmulti->hControl, vmulti->controlReport, CONTROL_REPORT_SIZE, &bytesWritten, NULL))
     {
         printf("failed WriteFile %d\n", GetLastError());
         return FALSE;
@@ -314,29 +344,15 @@ BOOL vmulti_read_message(pvmulti_client vmulti, VMultiMessageReport* pReport)
     ULONG bytesRead;
 
     //
-    // Find the message HID
-    //
-
-    HANDLE hMsg = SearchMatchingHwID(0xff00, 0x0002);
-    if (hMsg == INVALID_HANDLE_VALUE || hMsg == NULL)
-    {
-        printf("failed SearchMatchingHwID for message HID\n");
-        return FALSE;
-    }
-
-    //
     // Read the report
     //
 
-    //if (!HidD_GetInputReport(vmulti->hVMulti, vmulti->controlReport, CONTROL_REPORT_SIZE))
-    if (!ReadFile(hMsg, pReport, sizeof(VMultiMessageReport), &bytesRead, NULL))
+    if (!ReadFile(vmulti->hMessage, pReport, sizeof(VMultiMessageReport), &bytesRead, NULL))
     {
-        CloseHandle(hMsg);
         printf("failed ReadFile %d\n", GetLastError());
         return FALSE;
     }
 
-    CloseHandle(hMsg);
     return TRUE;
 }
 
