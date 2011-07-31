@@ -21,7 +21,7 @@ SendHidRequests(
 void
 Usage(void)
 {
-    printf("Usage: testvmulti </multitouch | /mouse | /digitizer | /joystick | /keyboard>\n");
+    printf("Usage: testvmulti </multitouch | /mouse | /digitizer | /joystick | /keyboard | /message>\n");
 }
 
 INT __cdecl
@@ -64,6 +64,10 @@ main(
     {
         reportId = REPORTID_KEYBOARD;
     }
+    else if (strcmp(argv[1], "/message") == 0)
+    {
+        reportId = REPORTID_MESSAGE;
+    }
     else
     {
         Usage();
@@ -87,10 +91,11 @@ main(
         return 3;
     }
 
-    printf("...sending write request to our device\n");
+    printf("...sending request(s) to our device\n");
     SendHidRequests(vmulti, reportId);
 
     vmulti_disconnect(vmulti);
+
     vmulti_free(vmulti);
 
     return 0;
@@ -221,12 +226,12 @@ SendHidRequests(
                         
             BYTE shiftKeys = KBD_LGUI_BIT;
             BYTE keyCodes[KBD_KEY_CODES] = {0, 0, 0, 0, 0, 0};
-            printf("Sending keyboard report\n");            
-            
+            printf("Sending keyboard report\n");
+
             // Windows key
             vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
             shiftKeys = 0;
-            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);            
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
             Sleep(100);
             
             // 'Hello'
@@ -251,7 +256,31 @@ SendHidRequests(
             keyCodes[0] = 0x39; // caps lock
             vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
             keyCodes[0] = 0x0;
-            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);            
+            vmulti_update_keyboard(vmulti, shiftKeys, keyCodes);
+
+            break;
+        }
+
+        case REPORTID_MESSAGE:
+        {
+            VMultiMessageReport report;
+
+            printf("Writing vendor message report\n");
+
+            memcpy(report.Message, "Hello VMulti\x00", 13);
+
+            if (vmulti_write_message(vmulti, &report))
+            {
+                memset(&report, 0, sizeof(report));
+                printf("Reading vendor message report\n");
+                if (vmulti_read_message(vmulti, &report))
+                {
+                    printf("Success!\n    ");
+                    printf(report.Message);
+                }
+            }
+
+            break;
         }
     }
 }
