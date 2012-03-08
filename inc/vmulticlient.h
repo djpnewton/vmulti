@@ -15,6 +15,8 @@ void vmulti_disconnect(pvmulti_client vmulti);
 
 BOOL vmulti_update_mouse(pvmulti_client vmulti, BYTE button, USHORT x, USHORT y, BYTE wheelPosition);
 
+BOOL vmulti_update_relative_mouse(pvmulti_client vmulti, BYTE button, BYTE x, BYTE y, BYTE wheelPosition);
+
 BOOL vmulti_update_digi(pvmulti_client vmulti, BYTE status, USHORT x, USHORT y);
 
 BOOL vmulti_update_multitouch(pvmulti_client vmulti, PTOUCH pTouch, BYTE actualCount);

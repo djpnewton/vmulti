@@ -17,9 +17,10 @@
 #define REPORTID_MTOUCH         0x01
 #define REPORTID_FEATURE        0x02
 #define REPORTID_MOUSE          0x03
-#define REPORTID_DIGI           0x04
-#define REPORTID_JOYSTICK       0x05
-#define REPORTID_KEYBOARD       0x06
+#define REPORTID_RELATIVE_MOUSE 0x04
+#define REPORTID_DIGI           0x05
+#define REPORTID_JOYSTICK       0x06
+#define REPORTID_KEYBOARD       0x07
 #define REPORTID_MESSAGE        0x10
 #define REPORTID_CONTROL        0x40
 
@@ -143,6 +144,7 @@ typedef struct _VMULTI_DIGI_REPORT
 
 #define MOUSE_BUTTON_1     0x01
 #define MOUSE_BUTTON_2     0x02
+#define MOUSE_BUTTON_3     0x04
 
 #define MOUSE_MIN_COORDINATE   0x0000
 #define MOUSE_MAX_COORDINATE   0x7FFF
@@ -165,6 +167,30 @@ typedef struct _VMULTI_MOUSE_REPORT
     BYTE        WheelPosition;
 
 } VMultiMouseReport;
+#pragma pack()
+
+//
+// Relative mouse specific report information
+//
+
+#define RELATIVE_MOUSE_MIN_COORDINATE   -127
+#define RELATIVE_MOUSE_MAX_COORDINATE   127
+
+#pragma pack(1)
+typedef struct _VMULTI_RELATIVE_MOUSE_REPORT
+{
+
+    BYTE        ReportID;
+
+    BYTE        Button;
+
+    BYTE        XValue;
+
+    BYTE        YValue;
+
+    BYTE        WheelPosition;
+
+} VMultiRelativeMouseReport;
 #pragma pack()
 
 //

@@ -161,6 +161,40 @@ BOOL vmulti_update_mouse(pvmulti_client vmulti, BYTE button, USHORT x, USHORT y,
     return HidOutput(FALSE, vmulti->hControl, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
 }
 
+BOOL vmulti_update_relative_mouse(pvmulti_client vmulti, BYTE button,
+BYTE x, BYTE y, BYTE wheelPosition)
+{
+    VMultiControlReportHeader* pReport = NULL;
+    VMultiRelativeMouseReport* pMouseReport = NULL;
+
+    if (CONTROL_REPORT_SIZE <= sizeof(VMultiControlReportHeader) + sizeof(VMultiRelativeMouseReport))
+    {
+        return FALSE;
+    }
+
+    //
+    // Set the report header
+    //
+
+    pReport = (VMultiControlReportHeader*)vmulti->controlReport;
+    pReport->ReportID = REPORTID_CONTROL;
+    pReport->ReportLength = sizeof(VMultiRelativeMouseReport);
+
+    //
+    // Set the input report
+    //
+
+    pMouseReport = (VMultiRelativeMouseReport*)(vmulti->controlReport + sizeof(VMultiControlReportHeader));
+    pMouseReport->ReportID = REPORTID_RELATIVE_MOUSE;
+    pMouseReport->Button = button;
+    pMouseReport->XValue = x;
+    pMouseReport->YValue = y;
+    pMouseReport->WheelPosition = wheelPosition;
+
+    // Send the report
+    return HidOutput(FALSE, vmulti->hControl, (PCHAR)vmulti->controlReport, CONTROL_REPORT_SIZE);
+}
+
 BOOL vmulti_update_digi(pvmulti_client vmulti, BYTE status, USHORT x, USHORT y)
 {
     VMultiControlReportHeader* pReport = NULL;
