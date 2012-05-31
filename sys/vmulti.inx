@@ -21,11 +21,11 @@ CopyFunctionDriver = 12
 
 ; For XP and later
 [Vendor.NT$ARCH$]
-%vmulti%    = vmulti.Inst, HID\vmulti
+%vmulti%    = vmulti.Inst, djpnewton\vmulti
 
 ; For Win7 and later so that we can use inbox HID-KMDF mapper
 [Vendor.NT$ARCH$.6.1]
-%vmulti%    = vmulti.Inst.Win7, HID\vmulti
+%vmulti%    = vmulti.Inst.Win7, djpnewton\vmulti
 
 ;===============================================================
 ;   vmulti for XP thru Vista

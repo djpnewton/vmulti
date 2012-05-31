@@ -26,10 +26,10 @@ copy %BASEDIR%\redist\wdf\x86\WdfCoInstaller01009.dll bin\
 
 echo off
 :: create bat file for easier installation of driver
-echo %BASEDIR%\tools\devcon\i386\devcon.exe install vmulti.inf HID\vmulti > bin\install_driver.bat
+echo %BASEDIR%\tools\devcon\i386\devcon.exe install vmulti.inf djpnewton\vmulti > bin\install_driver.bat
 
 :: create bat file for easier testing
-echo %BASEDIR%\tools\devcon\i386\devcon.exe remove HID\vmulti > bin\test.bat
+echo %BASEDIR%\tools\devcon\i386\devcon.exe remove djpnewton\vmulti > bin\test.bat
 echo cd .. >> bin\test.bat
 echo cmd /c buildme.bat >> bin\test.bat
 echo cd bin >> bin\test.bat
