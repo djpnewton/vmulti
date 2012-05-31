@@ -25,7 +25,7 @@
 #define DRIVERNAME                 "vmulti.sys: "
 
 #define VMULTI_POOL_TAG            (ULONG) 'luMV'
-#define VMULTI_HARDWARE_IDS        L"HID\\VMulti\0\0"
+#define VMULTI_HARDWARE_IDS        L"djpnewton\\VMulti\0\0"
 #define VMULTI_HARDWARE_IDS_LENGTH sizeof(VMULTI_HARDWARE_IDS)
 
 #define NTDEVICE_NAME_STRING       L"\\Device\\VMulti"
