@@ -3,7 +3,7 @@ Virtual Multiple HID Driver (multitouch, mouse, digitizer, keyboard, joystick)
 
 ### Prerequisites
 
-    Windows Driver Kit (https://www.microsoft.com/whdc/devtools/wdk/wdkpkg.mspx) 
+    Windows Driver Kit 7.1.0 (https://www.microsoft.com/whdc/devtools/wdk/wdkpkg.mspx) 
 
 ### Building
 
